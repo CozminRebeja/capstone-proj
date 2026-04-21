@@ -2,3 +2,7 @@
 /archive/
 /.claude/
 /data/
+
+AGENTS.md
+PLAN.md
+yolov3.weights
