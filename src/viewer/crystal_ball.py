@@ -15,6 +15,7 @@ from pathlib import Path
 
 import cv2
 
+from ..paths import ensure_output_dir
 from .pano_viewer import PanoViewer
 
 
@@ -38,7 +39,7 @@ def _seek(capture, frame_index):
 
 
 def _save_frame(frame, source_path, frame_index):
-    output = source_path.with_name(f"{source_path.stem}_view_{frame_index:06d}.jpg")
+    output = ensure_output_dir("frames") / f"{source_path.stem}_view_{frame_index:06d}.jpg"
     cv2.imwrite(str(output), frame)
     print(f"Saved {output}")
 

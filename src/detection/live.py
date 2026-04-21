@@ -28,6 +28,7 @@ os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;50000
 
 import cv2
 
+from ..paths import resolve_output_path
 from ..projection.fast_stereo import FastPano2Stereo
 from ..viewer.pano_viewer import PanoViewer
 from .yolo import CONFIDENCE_THRESHOLD, NMS_THRESHOLD, OBJECTNESS_THRESHOLD, Yolo
@@ -131,6 +132,10 @@ def parse_source(camera_arg):
         return camera_arg
 
 
+def output_path(path):
+    return str(resolve_output_path(path))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Live 360 video detection with Insta360 Pro + YOLOv3")
@@ -141,7 +146,7 @@ def main():
     parser.add_argument("--width", "-w", type=int, default=1280,
                         help="Resize frame width before processing (default: 1280)")
     parser.add_argument("--output", "-o", type=str, default=None,
-                        help="Optional path to save annotated video (.mp4)")
+                        help="Optional path under output/ to save annotated video (.mp4)")
     parser.add_argument("--no-display", action="store_true",
                         help="Suppress OpenCV display window")
     parser.add_argument("--view-size", type=int, nargs=2, default=(720, 1280),
@@ -214,6 +219,8 @@ def main():
     # Optional video writer
     writer = None
     if args.output:
+        args.output = output_path(args.output)
+        os.makedirs(os.path.dirname(args.output), exist_ok=True)
         fourcc = cv2.VideoWriter.fourcc(*"mp4v")
         writer = cv2.VideoWriter(args.output, fourcc, 15.0, (view_w, view_h))
         if not writer.isOpened():

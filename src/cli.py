@@ -14,7 +14,7 @@ from .detection.yolo import (
 )
 from .insta360.project import validate_origin_videos
 from .insta360.stitch_cli import stitch_folder
-from .paths import REPO_ROOT
+from .paths import REPO_ROOT, ensure_output_dir, resolve_output_dir, resolve_output_path
 from .viewer.crystal_ball import preview_video
 
 
@@ -37,8 +37,8 @@ def _has_origin_videos(path):
 
 def _default_output_dir(video_path):
     if video_path.is_dir():
-        return video_path / "processed"
-    return video_path.parent / f"{video_path.stem}_processed"
+        return ensure_output_dir(video_path.name)
+    return ensure_output_dir(video_path.stem)
 
 
 def _stitch_input_folder(input_path, output_dir, args):
@@ -72,7 +72,7 @@ def run_video(args):
     if not input_path.exists():
         raise RuntimeError(f"Video path does not exist: {input_path}")
 
-    output_dir = _absolute(args.output_dir) if args.output_dir else _default_output_dir(input_path)
+    output_dir = resolve_output_dir(args.output_dir) if args.output_dir else _default_output_dir(input_path)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if _has_origin_videos(input_path):
@@ -138,7 +138,9 @@ def run_live(args):
         str(args.nms_threshold),
     ]
     if args.output:
-        live_args.extend(["--output", str(_absolute(args.output))])
+        live_output = resolve_output_path(args.output)
+        live_output.parent.mkdir(parents=True, exist_ok=True)
+        live_args.extend(["--output", str(live_output)])
     if args.no_preview:
         live_args.append("--no-display")
 
@@ -173,8 +175,8 @@ def parse_args():
     source.add_argument("--live", help="Live RTSP URL, video source, or camera index.")
     source.add_argument("--preview", help="Open a video directly in crystal-ball preview.")
 
-    parser.add_argument("--output-dir", default=None, help="Offline output directory.")
-    parser.add_argument("--output", default=None, help="Live output video path.")
+    parser.add_argument("--output-dir", default=None, help="Offline output directory under output/.")
+    parser.add_argument("--output", default=None, help="Live output video path under output/.")
     parser.add_argument("--no-preview", action="store_true", help="Do not open a preview window.")
     parser.add_argument("--max-frames", type=int, default=None, help="Offline smoke-test frame limit.")
     parser.add_argument("--fps", type=float, default=None, help="Override stitched output FPS.")

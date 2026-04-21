@@ -10,6 +10,7 @@ from pathlib import Path
 
 import cv2
 
+from ..paths import ensure_output_dir, resolve_output_dir
 from .pano_viewer import PanoViewer
 
 
@@ -117,7 +118,7 @@ def parse_args():
     parser.add_argument(
         "--output-dir",
         default=None,
-        help="Directory for rendered videos (default: input folder/crystal_ball).",
+        help="Directory for rendered videos (default: output/crystal_ball).",
     )
     parser.add_argument(
         "--view-size",
@@ -144,9 +145,7 @@ def main():
     args = parse_args()
     inputs = discover_inputs(args.input)
 
-    source_path = Path(args.input)
-    default_output_dir = source_path if source_path.is_dir() else source_path.parent
-    output_dir = Path(args.output_dir) if args.output_dir else default_output_dir / "crystal_ball"
+    output_dir = resolve_output_dir(args.output_dir) if args.output_dir else ensure_output_dir("crystal_ball")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for input_video in inputs:

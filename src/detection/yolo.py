@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 
 from ..paths import ASSETS_DIR
+from ..paths import resolve_output_path
 from ..projection.stereo import pano2stereo, realign_bbox
 
 CONFIDENCE_THRESHOLD = 0.45
@@ -260,7 +261,7 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Detect objects on a panorama image.")
     parser.add_argument("input", help="Path to the input panorama image.")
-    parser.add_argument("output", help="Path to the output image with boxes.")
+    parser.add_argument("output", help="Path under output/ for the image with boxes.")
     parser.add_argument(
         "--conf-threshold",
         type=float,
@@ -280,6 +281,8 @@ def main():
         help="NMS IoU threshold in panorama space (default: %(default)s).",
     )
     args = parser.parse_args()
+    output_path = resolve_output_path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     my_net = Yolo(
         conf_threshold=args.conf_threshold,
@@ -293,7 +296,7 @@ def main():
     projections = pano2stereo(input_pano)
 
     output_frame = my_net.process_output(input_pano, projections)
-    cv2.imwrite(args.output, output_frame)
+    cv2.imwrite(str(output_path), output_frame)
 
 if __name__ == '__main__':
     main()

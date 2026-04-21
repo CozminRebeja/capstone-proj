@@ -8,8 +8,10 @@ This script reuses the existing panorama-to-stereo projection (`pano2stereo`)
 and YOLO detector (`Yolo`) to annotate each frame of a panoramic video.
 """
 import argparse
+
 import cv2
 
+from ..paths import resolve_output_path
 from ..projection.stereo import pano2stereo
 from .yolo import (
     CONFIDENCE_THRESHOLD,
@@ -83,7 +85,7 @@ def analyze_video(
 def parse_args():
     parser = argparse.ArgumentParser(description="Detect objects frame-by-frame on panorama videos.")
     parser.add_argument("--input", "-i", required=True, help="Path to the input panorama video.")
-    parser.add_argument("--output", "-o", required=True, help="Path to the output video with boxes.")
+    parser.add_argument("--output", "-o", required=True, help="Path under output/ for the video with boxes.")
     parser.add_argument(
         "--distance",
         "-d",
@@ -114,9 +116,12 @@ def parse_args():
 
 def main():
     args = parse_args()
+    output_path = resolve_output_path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     analyze_video(
         args.input,
-        args.output,
+        str(output_path),
         args.distance,
         args.conf_threshold,
         args.objectness_threshold,

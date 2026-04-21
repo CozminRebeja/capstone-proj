@@ -13,6 +13,8 @@ from scipy.interpolate import RectBivariateSpline
 import numpy as np
 import cv2
 
+from ..paths import ensure_output_dir, resolve_output_path
+
 
 def projection_angle(x, d):
     """
@@ -171,7 +173,7 @@ def merge_stereo(stereos):
     pano_1 = np.concatenate([frame_3, frame_1], axis=1)
     pano_2 = np.concatenate([frame_2[:, stride:, :], frame_0, frame_2[:, :stride, :]], axis=1)
 
-    cv2.imwrite('./merge_pano.jpg', (pano_1 + pano_2)/2)
+    cv2.imwrite(str(ensure_output_dir() / 'merge_pano.jpg'), (pano_1 + pano_2)/2)
 
     return (pano_1 + pano_2)/2
 
@@ -183,7 +185,7 @@ def main():
     parser.add_argument('--p2s', help='Path to panorama file.')
     parser.add_argument('--d', help='Postion of Projection', default=1., type=float)
     parser.add_argument('--s2p', help='Path to stereo file.')
-    parser.add_argument('--output', help='Path to output file') # ToDo(kevin): set a default
+    parser.add_argument('--output', help='Path under output/ for the output file')
     args = parser.parse_args()
 
     if (args.p2s):
@@ -191,7 +193,10 @@ def main():
         pano2stereo(pano, args.d)
     if (args.s2p):
         stereo = cv2.imread(args.s2p)
-        cv2.imwrite(args.output, stereo2pano(stereo))
+        output = args.output or 'stereo_to_pano.jpg'
+        output_path = resolve_output_path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(output_path), stereo2pano(stereo))
 
 if __name__ == '__main__':
     main()

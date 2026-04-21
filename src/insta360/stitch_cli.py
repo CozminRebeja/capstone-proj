@@ -9,6 +9,7 @@ from pathlib import Path
 
 import cv2
 
+from ..paths import ensure_output_dir, resolve_output_path
 from ..viewer.pano_viewer import PanoViewer
 from .stitcher import (
     Insta360Stitcher,
@@ -33,7 +34,7 @@ def _make_writer(path, fps, size):
 
 
 def _default_output(folder):
-    return Path(folder) / "stitched_equirect.mp4"
+    return ensure_output_dir(Path(folder).name) / "stitched_equirect.mp4"
 
 
 def stitch_folder(args):
@@ -51,7 +52,7 @@ def stitch_folder(args):
     captures = open_origin_captures(stitcher.origin_paths)
     source_fps, shortest_count, frame_counts = source_video_info(captures)
     fps = args.fps or source_fps
-    output_path = Path(args.output) if args.output else _default_output(args.folder)
+    output_path = resolve_output_path(args.output) if args.output else _default_output(args.folder)
     frame_limit = shortest_count
     if args.max_frames is not None:
         frame_limit = min(frame_limit, args.max_frames)
@@ -70,7 +71,8 @@ def stitch_folder(args):
     crystal_viewer = None
     if args.crystal_output:
         view_h, view_w = args.crystal_view_size
-        crystal_writer = _make_writer(args.crystal_output, fps, (view_w, view_h))
+        crystal_output = resolve_output_path(args.crystal_output)
+        crystal_writer = _make_writer(crystal_output, fps, (view_w, view_h))
         crystal_viewer = PanoViewer(
             out_h=view_h,
             out_w=view_w,
@@ -83,7 +85,7 @@ def stitch_folder(args):
             fov=args.crystal_fov,
             roll=args.crystal_roll,
         )
-        print(f"Writing crystal-ball view: {args.crystal_output}")
+        print(f"Writing crystal-ball view: {crystal_output}")
 
     processed = 0
     try:
@@ -118,7 +120,7 @@ def parse_args():
     parser.add_argument(
         "--output",
         default=None,
-        help="Output equirectangular MP4 path (default: folder/stitched_equirect.mp4).",
+        help="Output equirectangular MP4 path under output/ (default: output/folder/stitched_equirect.mp4).",
     )
     parser.add_argument("--width", type=int, default=3840, help="Output panorama width.")
     parser.add_argument("--fps", type=float, default=None, help="Override output FPS.")
@@ -163,7 +165,7 @@ def parse_args():
         action="store_true",
         help="Use direct lens rotations instead of inverse world-to-lens rotations.",
     )
-    parser.add_argument("--crystal-output", default=None, help="Optional crystal-ball MP4 path.")
+    parser.add_argument("--crystal-output", default=None, help="Optional crystal-ball MP4 path under output/.")
     parser.add_argument("--crystal-yaw", type=float, default=0.0, help="Crystal view yaw.")
     parser.add_argument("--crystal-pitch", type=float, default=0.0, help="Crystal view pitch.")
     parser.add_argument("--crystal-roll", type=float, default=-90.0, help="Crystal view roll.")

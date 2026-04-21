@@ -2,6 +2,7 @@
 /archive/
 /.claude/
 /data/
+/output/
 
 AGENTS.md
 PLAN.md
